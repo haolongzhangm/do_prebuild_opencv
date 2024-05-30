@@ -49,6 +49,10 @@ class Build:
             DependsHostType.ENVIRONMENT,
             "toolchain for build Android, please download from https://developer.android.google.cn/ndk/downloads ,then set it path to NDK_ROOT env",
         ]
+        self._common_env_cmd_describe["OHOS_NDK_ROOT"] = [
+            DependsHostType.ENVIRONMENT,
+            "toolchain for build OHOS, please download from https://gitee.com/openharmony/build/wikis/NDK/HOW%20TO%20USE%20NDK%20(linux),then set it path to OHOS_NDK_ROOT env",
+        ]
         self._common_env_cmd_describe["gcc"] = [
             DependsHostType.COMMAND,
             "toolchain for host build, please install by: apt install gcc build-essential",
@@ -114,6 +118,16 @@ class Build:
             ndk_path, self.android_toolchains
         )
         logging.debug("use NDK toolchains: {}".format(self.android_toolchains))
+        ohos_ndk_path = os.environ.get("OHOS_NDK_ROOT")
+        self.ohos_toolchains = os.path.join(
+            ohos_ndk_path, "build/cmake/ohos.toolchain.cmake"
+        )
+        assert os.path.isfile(
+            self.ohos_toolchains
+        ), "error config env: OHOS_NDK_ROOT: {}, can not find ohos toolchains: {}".format(
+            ohos_ndk_path, self.ohos_toolchains
+        )
+        logging.debug("use OHOS toolchains: {}".format(self.ohos_toolchains))
 
     def build(self):
         self.detect_build_env()
@@ -161,9 +175,10 @@ class Build:
             "x86_64_Linux": "",
             # "i386_Linux": "",
             "aarch64_Linux": f"-DCMAKE_TOOLCHAIN_FILE={os.path.join(self.toolchain_dir, 'aarch64-linux-gnu.toolchain.cmake')}",
-            "armv7-a_Linux": f"-DCMAKE_TOOLCHAIN_FILE={os.path.join(self.toolchain_dir, 'arm-linux-gnueabi.toolchain.cmake')}",
+            "armv7-a_Linux": f"-DCMAKE_TOOLCHAIN_FILE={os.path.join(self.toolchain_dir, 'arm-linux-gnueabihf.toolchain.cmake')}",
             "aarch64_Android": f"-DCMAKE_TOOLCHAIN_FILE={self.android_toolchains} -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-21",
             "armv7-a_Android": f"-DCMAKE_TOOLCHAIN_FILE={self.android_toolchains} -DANDROID_ABI=armeabi-v7a -DANDROID_PLATFORM=android-21",
+            "aarch64_ohos": f"-DCMAKE_TOOLCHAIN_FILE={self.ohos_toolchains} -DOHOS_STL=c++_static -DOHOS_ARCH=arm64-v8a -DOHOS_PLATFORM=OHOS",
         }
 
         for arch_os, toolchains_config in ARCH_OS_MAPS.items():
